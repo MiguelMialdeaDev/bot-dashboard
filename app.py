@@ -25,18 +25,27 @@ bot_processes = {
 
 
 def find_bot_process(bot_name):
-    """Busca el proceso de un bot por nombre de script"""
+    """Busca el proceso de un bot por nombre de script y directorio"""
     try:
-        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline', 'cwd']):
             try:
                 cmdline = proc.info['cmdline']
                 if cmdline and 'python' in proc.info['name'].lower():
                     cmdline_str = ' '.join(cmdline)
                     if 'start_continuous.py' in cmdline_str:
-                        if bot_name == "crypto" and "crypto-trading-bot" in cmdline_str:
-                            return proc.info['pid']
-                        elif bot_name == "wallapop" and "wallapop-bot" in cmdline_str:
-                            return proc.info['pid']
+                        # Obtener el directorio de trabajo del proceso
+                        try:
+                            cwd = proc.cwd()
+                            if bot_name == "crypto" and "crypto-trading-bot" in cwd:
+                                return proc.info['pid']
+                            elif bot_name == "wallapop" and "wallapop-bot" in cwd:
+                                return proc.info['pid']
+                        except (psutil.AccessDenied, AttributeError):
+                            # Si no podemos obtener cwd, intentar buscar en cmdline
+                            if bot_name == "crypto" and "crypto-trading-bot" in cmdline_str:
+                                return proc.info['pid']
+                            elif bot_name == "wallapop" and "wallapop-bot" in cmdline_str:
+                                return proc.info['pid']
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
     except:
@@ -192,16 +201,18 @@ def api_start(bot_name):
 
     try:
         if bot_name == "crypto":
-            script_path = os.path.join(CRYPTO_BOT_PATH, "start_continuous.py")
             cwd = CRYPTO_BOT_PATH
         else:
-            script_path = os.path.join(WALLAPOP_BOT_PATH, "start_continuous.py")
             cwd = WALLAPOP_BOT_PATH
+
+        # Verificar que el directorio existe
+        if not os.path.exists(cwd):
+            return jsonify({"error": f"Directorio no encontrado: {cwd}"}), 500
 
         # Iniciar proceso en background
         process = subprocess.Popen(
-            ["python", "-u", script_path],
-            cwd=cwd,
+            ["python", "-u", "start_continuous.py"],
+            cwd=os.path.abspath(cwd),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name == 'nt' else 0
