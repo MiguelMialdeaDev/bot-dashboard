@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Bots</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .bots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .bot-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+        }
+
+        .bot-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .bot-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .bot-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .bot-title.crypto {
+            color: #667eea;
+        }
+
+        .bot-title.wallapop {
+            color: #13ce66;
+        }
+
+        .status-badge {
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .status-badge.running {
+            background: #13ce66;
+            color: white;
+        }
+
+        .status-badge.stopped {
+            background: #ff4949;
+            color: white;
+        }
+
+        .bot-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .bot-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-start {
+            background: #13ce66;
+            color: white;
+        }
+
+        .btn-stop {
+            background: #ff4949;
+            color: white;
+        }
+
+        .btn-logs {
+            background: #667eea;
+            color: white;
+        }
+
+        .logs-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            margin-top: 20px;
+        }
+
+        .logs-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .logs-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .logs-content {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Dashboard de Bots</h1>
+
+        <div class="bots-grid">
+            <!-- Bot de Crypto -->
+            <div class="bot-card">
+                <div class="bot-header">
+                    <span class="bot-title crypto">💰 Bot de Crypto</span>
+                    <span id="crypto-status" class="status-badge stopped">Detenido</span>
+                </div>
+                <div class="bot-stats">
+                    <div class="stat-box">
+                        <div class="stat-label">Balance</div>
+                        <div id="crypto-balance" class="stat-value">$0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Posiciones</div>
+                        <div id="crypto-positions" class="stat-value">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Total Trades</div>
+                        <div id="crypto-trades" class="stat-value">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Memoria</div>
+                        <div id="crypto-memory" class="stat-value">- MB</div>
+                    </div>
+                </div>
+                <div class="bot-controls">
+                    <button id="crypto-start" class="btn btn-start" onclick="startBot('crypto')">▶ Iniciar</button>
+                    <button id="crypto-stop" class="btn btn-stop" onclick="stopBot('crypto')" disabled>⏹ Detener</button>
+                    <button class="btn btn-logs" onclick="showLogs('crypto')">📋 Logs</button>
+                </div>
+            </div>
+
+            <!-- Bot de Wallapop -->
+            <div class="bot-card">
+                <div class="bot-header">
+                    <span class="bot-title wallapop">🛍️ Bot de Wallapop</span>
+                    <span id="wallapop-status" class="status-badge stopped">Detenido</span>
+                </div>
+                <div class="bot-stats">
+                    <div class="stat-box">
+                        <div class="stat-label">Total Gangas</div>
+                        <div id="wallapop-total" class="stat-value">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Gangas Hoy</div>
+                        <div id="wallapop-today" class="stat-value">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Uptime</div>
+                        <div id="wallapop-uptime" class="stat-value">-</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Memoria</div>
+                        <div id="wallapop-memory" class="stat-value">- MB</div>
+                    </div>
+                </div>
+                <div class="bot-controls">
+                    <button id="wallapop-start" class="btn btn-start" onclick="startBot('wallapop')">▶ Iniciar</button>
+                    <button id="wallapop-stop" class="btn btn-stop" onclick="stopBot('wallapop')" disabled>⏹ Detener</button>
+                    <button class="btn btn-logs" onclick="showLogs('wallapop')">📋 Logs</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección de Logs -->
+        <div id="logs-section" class="logs-section hidden">
+            <div class="logs-header">
+                <span class="logs-title">📋 Logs - <span id="logs-bot-name"></span></span>
+                <button class="btn btn-stop" onclick="hideLogs()" style="flex: none; padding: 8px 16px;">✕ Cerrar</button>
+            </div>
+            <div id="logs-content" class="logs-content">
+                Cargando logs...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentBot = null;
+
+        // Actualizar estado cada 3 segundos
+        setInterval(updateStatus, 3000);
+        updateStatus();
+
+        function formatUptime(seconds) {
+            if (!seconds) return '-';
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            return `${hours}h ${minutes}m`;
+        }
+
+        async function updateStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+
+                // Update Crypto Bot
+                const crypto = data.bots.crypto;
+                document.getElementById('crypto-status').textContent = crypto.running ? 'Corriendo' : 'Detenido';
+                document.getElementById('crypto-status').className = `status-badge ${crypto.running ? 'running' : 'stopped'}`;
+                document.getElementById('crypto-balance').textContent = `$${crypto.stats.balance.toLocaleString()}`;
+                document.getElementById('crypto-positions').textContent = crypto.stats.positions;
+                document.getElementById('crypto-trades').textContent = crypto.stats.total_trades;
+                document.getElementById('crypto-memory').textContent = crypto.memory ? `${crypto.memory.toFixed(1)} MB` : '- MB';
+                document.getElementById('crypto-start').disabled = crypto.running;
+                document.getElementById('crypto-stop').disabled = !crypto.running;
+
+                // Update Wallapop Bot
+                const wallapop = data.bots.wallapop;
+                document.getElementById('wallapop-status').textContent = wallapop.running ? 'Corriendo' : 'Detenido';
+                document.getElementById('wallapop-status').className = `status-badge ${wallapop.running ? 'running' : 'stopped'}`;
+                document.getElementById('wallapop-total').textContent = wallapop.stats.total_gangas;
+                document.getElementById('wallapop-today').textContent = wallapop.stats.gangas_hoy;
+                document.getElementById('wallapop-uptime').textContent = formatUptime(wallapop.uptime);
+                document.getElementById('wallapop-memory').textContent = wallapop.memory ? `${wallapop.memory.toFixed(1)} MB` : '- MB';
+                document.getElementById('wallapop-start').disabled = wallapop.running;
+                document.getElementById('wallapop-stop').disabled = !wallapop.running;
+
+                // Update logs if visible
+                if (currentBot && !document.getElementById('logs-section').classList.contains('hidden')) {
+                    loadLogs(currentBot);
+                }
+            } catch (error) {
+                console.error('Error updating status:', error);
+            }
+        }
+
+        async function startBot(botName) {
+            try {
+                const response = await fetch(`/api/start/${botName}`, { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    alert(`✅ ${botName} iniciado correctamente`);
+                    updateStatus();
+                } else {
+                    alert(`❌ Error: ${data.error}`);
+                }
+            } catch (error) {
+                alert(`❌ Error iniciando bot: ${error}`);
+            }
+        }
+
+        async function stopBot(botName) {
+            if (!confirm(`¿Seguro que quieres detener el bot de ${botName}?`)) {
+                return;
+            }
+            try {
+                const response = await fetch(`/api/stop/${botName}`, { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    alert(`✅ ${botName} detenido correctamente`);
+                    updateStatus();
+                } else {
+                    alert(`❌ Error: ${data.error}`);
+                }
+            } catch (error) {
+                alert(`❌ Error deteniendo bot: ${error}`);
+            }
+        }
+
+        async function showLogs(botName) {
+            currentBot = botName;
+            document.getElementById('logs-bot-name').textContent = botName.charAt(0).toUpperCase() + botName.slice(1);
+            document.getElementById('logs-section').classList.remove('hidden');
+            await loadLogs(botName);
+        }
+
+        async function loadLogs(botName) {
+            try {
+                const response = await fetch(`/api/logs/${botName}?lines=100`);
+                const data = await response.json();
+                document.getElementById('logs-content').textContent = data.logs || 'No hay logs disponibles';
+                // Auto-scroll to bottom
+                const logsContent = document.getElementById('logs-content');
+                logsContent.scrollTop = logsContent.scrollHeight;
+            } catch (error) {
+                document.getElementById('logs-content').textContent = `Error cargando logs: ${error}`;
+            }
+        }
+
+        function hideLogs() {
+            document.getElementById('logs-section').classList.add('hidden');
+            currentBot = null;
+        }
+    </script>
+</body>
+</html>
