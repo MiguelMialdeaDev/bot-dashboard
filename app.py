@@ -24,6 +24,26 @@ bot_processes = {
 }
 
 
+def find_bot_process(bot_name):
+    """Busca el proceso de un bot por nombre de script"""
+    try:
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+            try:
+                cmdline = proc.info['cmdline']
+                if cmdline and 'python' in proc.info['name'].lower():
+                    cmdline_str = ' '.join(cmdline)
+                    if 'start_continuous.py' in cmdline_str:
+                        if bot_name == "crypto" and "crypto-trading-bot" in cmdline_str:
+                            return proc.info['pid']
+                        elif bot_name == "wallapop" and "wallapop-bot" in cmdline_str:
+                            return proc.info['pid']
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+    except:
+        pass
+    return None
+
+
 def is_process_running(pid):
     """Verifica si un proceso está corriendo"""
     if pid is None:
@@ -37,7 +57,15 @@ def is_process_running(pid):
 
 def get_bot_status(bot_name):
     """Obtiene el estado de un bot"""
+    # Primero intentar con el PID guardado
     pid = bot_processes.get(bot_name)
+
+    # Si no hay PID guardado o el proceso no está corriendo, buscar automáticamente
+    if not is_process_running(pid):
+        pid = find_bot_process(bot_name)
+        if pid:
+            bot_processes[bot_name] = pid
+
     running = is_process_running(pid)
 
     status = {
